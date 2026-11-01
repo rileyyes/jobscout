@@ -2,32 +2,59 @@
 
 A personal AI job-search assistant. JobScout finds jobs from authorized sources, checks that they're actually open, ranks them against your confirmed career profile with plain-language reasons, and estimates whether the pay covers your real expenses. You always review and submit applications yourself.
 
-> **Status: Phase 1 of 4 — core engine.** The engine below works and is tested. The database, auth, API, and web UI arrive in Phases 2–3. See [docs/PLAN.md](docs/PLAN.md).
+> **Status: Phase 2 of 4 — backend API complete.** The web UI is Phase 3. See [docs/PLAN.md](docs/PLAN.md).
 
-## What works now (Phase 1)
+## Run the backend locally
 
-| Area | What it does |
-|---|---|
-| **Job sources** | Greenhouse Job Board API and Lever Postings API adapters (public, no key). Provider outages, rate limits, and malformed data are reported as search limitations instead of crashing the search. |
-| **Hiring verification** | Sorts each listing into `verified_open` / `recent_unconfirmed` / `expected_hiring` / `closed`. "Verified open" means the board still lists the job, the apply link responds, and the check is under 72 hours old. Expected hiring needs dated, sourced evidence and marks AI-inferred evidence as such. |
-| **Matching** | Four separate scores (qualification, compensation, hiring confidence, overall) with a reason for every point gained or lost. Handles "X or Y" requirements. Missing a *preferred* qualification never excludes a job. Weights are configurable. |
-| **Pay math** | Annualizes salary, monthly, weekly, and hourly pay. Hourly pay is never annualized without stated hours or hours you chose. Take-home uses 2026 federal brackets + FICA. Affordability is based on the low end of the range, and every output is labeled an estimate. |
-| **Dedup** | Canonical URLs with tracking parameters stripped, plus company/title/location fingerprints. The listing from the source closest to the employer is kept. |
-| **Untrusted text** | HTML/script stripping, zero-width character removal, prompt-injection detection, and randomized data boundaries for anything sent to an LLM. |
-| **Demo mode** | Synthetic jobs labeled "(Demo)" with `example.invalid` URLs. They're never shown as verified and can't be mixed with live results. |
-
-## Run the tests
+Requires Python 3.12+ and PostgreSQL 16.
 
 ```bash
+createdb jobscout                       # or use any Postgres you have
 cd backend
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
-python -m pytest -q
+cp .env.example .env                    # then set JOBSCOUT_DATABASE_URL and the two keys
+alembic upgrade head
+uvicorn app.asgi:app --reload
 ```
 
-## Known limitations (Phase 1)
+Interactive API docs: http://localhost:8000/api/docs. Try `POST /api/search` with `{"demo": true}` after registering.
 
-- Greenhouse and Lever are **per-employer** APIs: you choose which employers' boards to search. A broad keyword-search provider (such as USAJOBS or Adzuna, which need API keys) is planned for Phase 2.
-- Commute distance needs coordinates. Without geocoding (Phase 2), out-of-city jobs in your state get a neutral "distance unknown" score, and out-of-state jobs are flagged as outside your commute area.
-- State income tax is only estimated for states without a wage tax (e.g. NH). Other states show an incomplete estimate unless you enter an effective rate.
-- Skill extraction is a deterministic keyword vocabulary (`app/core/extract.py`). An LLM-assisted extractor, validated against that vocabulary, comes in Phase 4.
+### Tests
+
+```bash
+cd backend
+python -m pytest -q                     # core engine tests run anywhere
+export JOBSCOUT_TEST_DATABASE_URL=postgresql+psycopg://jobscout:jobscout@localhost:5432/jobscout_test
+python -m pytest -q                     # adds the API tests (needs that database to exist)
+```
+
+CI runs everything against Postgres 16 on each push, including `alembic upgrade`, `alembic check` (migration matches the models), and `alembic downgrade`.
+
+## Implemented vs. placeholder
+
+| Feature | Status |
+|---|---|
+| Greenhouse + Lever job sources, per-user employer list | ✅ Implemented |
+| Hiring verification (verified open / unconfirmed / expected / closed), recheck before applying | ✅ Implemented |
+| Transparent matching (qualification, compensation, hiring confidence, overall) | ✅ Implemented |
+| Pay annualizing, take-home + affordability estimates | ✅ Implemented (federal + FICA; state tax only for no-wage-tax states or a user override) |
+| Dedup across sources | ✅ Implemented |
+| Accounts: register, login, logout, sessions, CSRF, rate limits, password reset, account deletion | ✅ Implemented |
+| Career + financial profiles with explicit confirmation | ✅ Implemented |
+| Resume upload (PDF/DOCX): validation, encryption at rest, retention, proposed fields | ✅ Implemented |
+| Saved jobs, application tracker, notes, search history | ✅ Implemented |
+| Malware scanning | ⚙️ Works with ClamAV if configured; otherwise files are marked `not_scanned` |
+| Password-reset email delivery | ⚙️ Dev sender logs the link; plug in SMTP/provider for prod |
+| Job alerts | 🟡 Saved alert settings + no-repeat delivery table; the scheduler that runs them is Phase 4 |
+| Web UI | ⏳ Phase 3 |
+| LLM features (resume/cover-letter drafts, search agent, smarter extraction) | ⏳ Phase 4 |
+| Keyword-search providers (USAJOBS, Adzuna) | ⏳ Planned; need free API keys |
+| Commute distance by geocoding | ⏳ Planned; currently city/state matching |
+| LinkedIn sign-in (OIDC) | ⏳ Planned; job search/apply via LinkedIn is not possible and not attempted |
+
+## Docs
+
+- [Plan & architecture](docs/PLAN.md)
+- [Security design](docs/SECURITY.md)
+- [Job data providers, permissions & costs](docs/PROVIDERS.md)
