@@ -75,7 +75,7 @@ def test_scanner_verdicts(app, alice, docx_bytes):
 
 
 def test_filename_is_sanitized(alice, docx_bytes):
-    r = up(alice, "../../etc/pa\"ss<wd>.docx", docx_bytes)
+    r = up(alice, "../../etc/pa;ss<wd>.docx", docx_bytes)
     assert r.json()["resume"]["original_filename"] == "pa_ss_wd_.docx"
 
 

@@ -112,7 +112,7 @@ def upload(request: Request, file: UploadFile = File(...), keep_file: bool = For
     try:
         meta = validate_upload(file.filename or "", data, settings.max_upload_bytes)
     except UploadRejected as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(e)) from e
+        raise HTTPException(422, str(e)) from e
 
     try:
         verdict = request.app.state.scanner.scan(data)
@@ -120,12 +120,12 @@ def upload(request: Request, file: UploadFile = File(...), keep_file: bool = For
         log.exception("malware scanner failed")
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "File scanning is unavailable; try again later.")
     if verdict == "infected":
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "This file was flagged by the malware scanner.")
+        raise HTTPException(422, "This file was flagged by the malware scanner.")
 
     try:
         text = extract_text(data, meta.extension)
     except Exception as e:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Couldn't read text from this file.") from e
+        raise HTTPException(422, "Couldn't read text from this file.") from e
 
     store = request.app.state.file_store
     purge_expired(db, store)

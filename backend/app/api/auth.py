@@ -93,7 +93,7 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
              settings: Settings = Depends(get_settings)):
     email = body.email.lower()
     if problem := _weak(body.password, email):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
+        raise HTTPException(422, problem)
     if db.scalar(select(User.id).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email may already exist. Try signing in.")
     user = User(email=email, password_hash=hash_password(body.password), display_name=body.display_name)
@@ -176,7 +176,7 @@ def confirm_reset(body: ResetConfirmIn, db: Session = Depends(get_db)):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This reset link is invalid or has expired.")
     user = db.get(User, tok.user_id)
     if problem := _weak(body.new_password, user.email):
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, problem)
+        raise HTTPException(422, problem)
     user.password_hash = hash_password(body.new_password)
     tok.used_at = utcnow()
     db.execute(delete(UserSession).where(UserSession.user_id == user.id))  # sign out everywhere
