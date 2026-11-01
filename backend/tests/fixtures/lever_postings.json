@@ -1,0 +1,27 @@
+[
+  {
+    "id": "aaaa-1111",
+    "text": "IT Support Specialist",
+    "hostedUrl": "https://jobs.lever.co/northwind/aaaa-1111",
+    "applyUrl": "https://jobs.lever.co/northwind/aaaa-1111/apply",
+    "createdAt": 1761400000000,
+    "categories": {"commitment": "Full-time", "location": "Nashua, NH", "team": "IT"},
+    "workplaceType": "onsite",
+    "descriptionPlain": "Support 300 employees across our Nashua office.",
+    "lists": [
+      {"text": "Requirements", "content": "<li>Windows and Active Directory</li><li>Customer service skills</li><li>ServiceNow or similar ticketing</li>"},
+      {"text": "Nice to have", "content": "<li>PowerShell</li><li>A+ certification</li>"}
+    ],
+    "salaryRange": {"currency": "USD", "interval": "per-hour-wage", "min": 25, "max": 29}
+  },
+  {
+    "id": "bbbb-2222",
+    "text": "Security Analyst (Same job, reposted)",
+    "hostedUrl": "https://jobs.lever.co/northwind/bbbb-2222",
+    "createdAt": 1761500000000,
+    "categories": {"commitment": "Full-time", "location": "Manchester, NH"},
+    "workplaceType": "hybrid",
+    "descriptionPlain": "Hybrid SOC role. Requirements: SIEM, Python. Salary $60,000 - $70,000 per year.",
+    "lists": []
+  }
+]
