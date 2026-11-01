@@ -135,11 +135,11 @@ def find_min_years(text: str) -> float | None:
 
 
 _EDU = [
-    (EducationLevel.DOCTORATE, r"\b(ph\.?d|doctorate)\b"),
-    (EducationLevel.MASTER, r"\b(master'?s|m\.s\.|mba)\b"),
-    (EducationLevel.BACHELOR, r"\b(bachelor'?s|b\.s\.|b\.a\.|4[- ]year degree|undergraduate degree)\b"),
-    (EducationLevel.ASSOCIATE, r"\b(associate'?s? degree|2[- ]year degree)\b"),
-    (EducationLevel.HIGH_SCHOOL, r"\b(high school|ged)\b"),
+    (EducationLevel.DOCTORATE, r"\b(ph\.?\s?d|doctorate)\b"),
+    (EducationLevel.MASTER, r"\bmaster'?s\b|\bmaster of\b|\bm\.\s?s\.|\bmba\b"),
+    (EducationLevel.BACHELOR, r"\bbachelor(?:'?s)?\b|\bb\.\s?[sa]\.|\b4[- ]year degree\b|\bundergraduate degree\b"),
+    (EducationLevel.ASSOCIATE, r"\bassociate(?:'?s)? (?:degree|of)\b|\b2[- ]year degree\b|\ba\.\s?a\.\s?s?\.?"),
+    (EducationLevel.HIGH_SCHOOL, r"\bhigh school\b|\bged\b"),
 ]
 
 

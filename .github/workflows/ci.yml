@@ -5,6 +5,18 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: jobscout
+          POSTGRES_PASSWORD: jobscout
+          POSTGRES_DB: jobscout_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U jobscout" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      JOBSCOUT_TEST_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@localhost:5432/jobscout_test
     defaults:
       run:
         working-directory: backend
@@ -16,4 +28,18 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements*.txt
       - run: pip install -r requirements-dev.txt
-      - run: python -m pytest -q
+      - name: Tests
+        run: python -m pytest -q -rs
+      - name: Migrations apply cleanly and match the models
+        env:
+          JOBSCOUT_DATABASE_URL: postgresql+psycopg://jobscout:jobscout@localhost:5432/jobscout_migrate
+        run: |
+          PGPASSWORD=jobscout psql -h localhost -U jobscout -d jobscout_test -c "CREATE DATABASE jobscout_migrate"
+          if [ -z "$(ls migrations/versions/*.py 2>/dev/null)" ]; then
+            echo "::warning::No migrations yet - bootstrapping 0001 from models"
+            alembic revision --autogenerate -m "initial schema" --rev-id 0001
+            echo "----- BEGIN GENERATED MIGRATION -----"; cat migrations/versions/*.py; echo "----- END GENERATED MIGRATION -----"
+          fi
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
